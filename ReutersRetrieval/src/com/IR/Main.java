@@ -7,7 +7,7 @@ public class Main {
 
     public static void main(String[] args) {
 
-        ReadFiles readFiles = new ReadFiles("/Users/Rex/Documents/ZJU/2015春夏/IR/Reuters/test/");
+        ReadFiles readFiles = new ReadFiles(ConstValues.BASE_DIR);
         TermForm termForm = new TermForm();
         readFiles.loadFiles(termForm);
         termForm.printTable();

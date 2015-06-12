@@ -71,13 +71,15 @@ public class ReadFiles {
         }
     }
     /**
-     * Load data from files
+     * Load data from files, and check whether it
+     * contains letter/digit/slash sign.
      * @param termForm
      */
     public void loadFiles(TermForm termForm) {
 
         for (int i = 1; i <= ConstValues.TOTAL_FILE_AMOUNT; i++){
             String dir = baseDir + i + ".html";
+            System.out.println("[ Processing file " + i + ".html ]");
             File file = new File(String.valueOf(dir));
             if (file.exists()) try {
                 InputStream inputStream = new FileInputStream(file);
@@ -89,11 +91,18 @@ public class ReadFiles {
                 boolean digitAppear = false;
                 boolean letteAppear = false;
                 boolean slashAppear = false;
+                int docPos = 0;
                 StringBuilder term = new StringBuilder();
-                for (int item = 0; item < article.length(); item++) {
-                    char nextChar = article.charAt(item);
-                    if (nextChar == ' '){
-                        termForm.parseTerm(i, digitAppear, letteAppear, slashAppear, term);
+                for (int cursor = 0; cursor < article.length(); cursor++) {
+                    char nextChar = article.charAt(cursor);
+//                    System.out.println();
+//                    System.out.print(nextChar + "(" + (int)nextChar + "):");
+                    if (nextChar == ' ' || nextChar == '\n'){
+                        if (term.length() > 0) {
+                            docPos++;
+//                            System.out.print("<" + docPos + ">" + term);
+                            termForm.parseTerm(i, docPos, digitAppear, letteAppear, slashAppear, term);
+                        }
                         term = new StringBuilder();
                         digitAppear = false;
                         letteAppear = false;
