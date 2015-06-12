@@ -9,7 +9,9 @@ public class Main {
 
         ReadFiles readFiles = new ReadFiles(ConstValues.BASE_DIR);
         TermForm termForm = new TermForm();
+        KeyRetrieval keyRetrieval = new KeyRetrieval();
         readFiles.loadFiles(termForm);
-        termForm.printTable();
+//        termForm.printTable();
+        keyRetrieval.processRetrieval(termForm);
     }
 }
