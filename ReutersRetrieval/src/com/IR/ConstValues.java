@@ -5,5 +5,5 @@ package com.IR;
  */
 public class ConstValues {
 //    public static final int TOTAL_FILE_AMOUNT = 21576;
-    public static final int TOTAL_FILE_AMOUNT = 1;
+    public static final int TOTAL_FILE_AMOUNT = 2;
 }

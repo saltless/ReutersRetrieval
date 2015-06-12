@@ -2,6 +2,7 @@ package com.IR;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 /**
  * Created by Rex on 15/6/11.
@@ -10,7 +11,7 @@ import java.util.HashMap;
 public class TermForm {
 
     private HashMap<String, Integer> docuFrequency = new HashMap<String, Integer>();
-    private HashMap<String, ArrayList<Integer>> termFrequency = new HashMap<String, ArrayList<Integer>>();
+    private HashMap<String, LinkedList<TermFreqItem>> termFrequency = new HashMap<String, LinkedList<TermFreqItem>>();
 
     /**
      * Add term into tf table.
@@ -23,15 +24,16 @@ public class TermForm {
 
         if (null == termFrequency.get(rawString)){
             docuFrequency.put(rawString, 1);
-            termFrequency.put(rawString, new ArrayList<Integer>());
-            termFrequency.get(rawString).set(docID, 1);
+            termFrequency.put(rawString, new LinkedList<TermFreqItem>());
+            termFrequency.get(rawString).addLast(new TermFreqItem(docID, 1));
         } else {
-            int currFrequency = termFrequency.get(rawString).get(docID);
-            if (0 == currFrequency) {
+            if (termFrequency.get(rawString).getLast().docID != docID){
+                termFrequency.get(rawString).addLast(new TermFreqItem(docID, 1));
                 int currDocFrequency = docuFrequency.get(rawString);
                 docuFrequency.put(rawString, currDocFrequency + 1);
+            } else {
+                termFrequency.get(rawString).getLast().freq++;
             }
-            termFrequency.get(rawString).set(docID, currFrequency + 1);
         }
     }
 
@@ -93,16 +95,23 @@ public class TermForm {
             if (!letteAppear) {     //CASE: 123.234/22
                 addTerm(docID, rawString);
             } else {                //CASE: U.S.A
-                addTerm(docID, this.removeOthers(rawString));
+                addTerm(docID, this.removeOthers(rawString).toLowerCase());
             }
         } else if (letteAppear) {
-            addTerm(docID, this.removeOthers(rawString));
+            addTerm(docID, this.removeOthers(rawString).toLowerCase());
         }
     }
 
+    /**
+     * Print info of class for debugging.
+     */
     public void printTable(){
         for (String term : termFrequency.keySet()){
-            System.out.println(term);
+            System.out.print(term + " => " + docuFrequency.get(term) + "\n\t");
+            for (TermFreqItem item : termFrequency.get(term)){
+                System.out.print(item.docID + ":" + item.freq + " ");
+            }
+            System.out.println();
         }
     }
 }

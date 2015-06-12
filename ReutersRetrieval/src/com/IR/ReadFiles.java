@@ -76,9 +76,8 @@ public class ReadFiles {
      */
     public void loadFiles(TermForm termForm) {
 
-        String dir = baseDir;
         for (int i = 1; i <= ConstValues.TOTAL_FILE_AMOUNT; i++){
-            dir += i + ".html";
+            String dir = baseDir + i + ".html";
             File file = new File(String.valueOf(dir));
             if (file.exists()) try {
                 InputStream inputStream = new FileInputStream(file);
