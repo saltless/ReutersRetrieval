@@ -1,6 +1,5 @@
 package com.IR;
 
-import javax.print.Doc;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,8 +10,8 @@ import java.util.LinkedList;
 
 public class TermForm {
 
-    private HashMap<String, Integer> docuFrequency = new HashMap<String, Integer>();
-    private HashMap<String, LinkedList<TermFreqItem>> termFrequency = new HashMap<String, LinkedList<TermFreqItem>>();
+    private HashMap<String, Integer> docFrequency = new HashMap<String, Integer>();
+    private HashMap<String, ArrayList<TermFreqItem>> termFrequency = new HashMap<String, ArrayList<TermFreqItem>>();
     private HashMap<String, LinkedList<DocAppearItem>> docAppearPosition = new HashMap<String, LinkedList<DocAppearItem>>();
 
     /**
@@ -29,19 +28,19 @@ public class TermForm {
             String rawString = termItem.term;
             int docPos = termItem.docPos;
             if (null == termFrequency.get(rawString)){
-                docuFrequency.put(rawString, 1);
-                termFrequency.put(rawString, new LinkedList<TermFreqItem>());
-                termFrequency.get(rawString).addLast(new TermFreqItem(docID, 1));
+                docFrequency.put(rawString, 1);
+                termFrequency.put(rawString, new ArrayList<TermFreqItem>());
+                termFrequency.get(rawString).add(new TermFreqItem(docID, 1));
                 docAppearPosition.put(rawString, new LinkedList<DocAppearItem>());
                 docAppearPosition.get(rawString).addLast(new DocAppearItem(docID, docPos));
             } else {
                 docAppearPosition.get(rawString).addLast(new DocAppearItem(docID, docPos));
-                if (termFrequency.get(rawString).getLast().docID != docID){
-                    termFrequency.get(rawString).addLast(new TermFreqItem(docID, 1));
-                    int currDocFrequency = docuFrequency.get(rawString);
-                    docuFrequency.put(rawString, currDocFrequency + 1);
+                if (termFrequency.get(rawString).get(termFrequency.get(rawString).size() - 1).docID != docID){
+                    termFrequency.get(rawString).add(new TermFreqItem(docID, 1));
+                    int currDocFrequency = docFrequency.get(rawString);
+                    docFrequency.put(rawString, currDocFrequency + 1);
                 } else {
-                    termFrequency.get(rawString).getLast().freq++;
+                    termFrequency.get(rawString).get(termFrequency.get(rawString).size() - 1).freq++;
                 }
             }
         }
@@ -52,12 +51,12 @@ public class TermForm {
      */
     public void printTable(){
         for (String term : termFrequency.keySet()){
-            System.out.print(term + " => df = " + docuFrequency.get(term) + " tf = " + termFrequency.get(term).get(0).freq + "\n\t");
+            System.out.print(term + " => df = " + docFrequency.get(term) + " tf = " + termFrequency.get(term).get(0).freq + "\n\t");
             for (DocAppearItem item : docAppearPosition.get(term)){
                 System.out.print(item.docID + ":" + item.docPos + " ");
             }
             System.out.println();
         }
-        System.out.println("Total number of term = " + termFrequency.size());
+        System.out.println("Total number of terms = " + termFrequency.size());
     }
 }

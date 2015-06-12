@@ -11,7 +11,7 @@ public class Main {
         TermForm termForm = new TermForm();
         KeyRetrieval keyRetrieval = new KeyRetrieval();
         readFiles.loadFiles(termForm);
-//        termForm.printTable();
-        keyRetrieval.processRetrieval(termForm);
+        termForm.printTable();
+//        keyRetrieval.processRetrieval(termForm);
     }
 }
