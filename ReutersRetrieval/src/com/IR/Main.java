@@ -1,8 +1,5 @@
 package com.IR;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 public class Main {
 
     public static void main(String[] args) {
@@ -12,6 +9,6 @@ public class Main {
         KeyRetrieval keyRetrieval = new KeyRetrieval();
         readFiles.loadFiles(termForm);
         termForm.printTable();
-//        keyRetrieval.processRetrieval(termForm);
+//        keyRetrieval.processRetrieval(termForm, readFiles);
     }
 }

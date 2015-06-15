@@ -13,6 +13,26 @@ public class TermForm {
     private HashMap<String, Integer> docFrequency = new HashMap<String, Integer>();
     private HashMap<String, ArrayList<TermFreqItem>> termFrequency = new HashMap<String, ArrayList<TermFreqItem>>();
     private HashMap<String, LinkedList<DocAppearItem>> docAppearPosition = new HashMap<String, LinkedList<DocAppearItem>>();
+    private HashMap<Integer, Double> docLength = new HashMap<Integer, Double>();
+
+    public int getTermFrequencyDocLength(String term) {
+        if (null == termFrequency.get(term)) return -1;
+        return termFrequency.get(term).size();
+    }
+
+    public int getTermFrequencyDocID(String term, int cursor) {
+        if (null == termFrequency.get(term)) return -1;
+        return termFrequency.get(term).get(cursor).docID;
+    }
+
+    public int getTermFrequency(String term, int cursor) {
+        if (null == termFrequency.get(term)) return -1;
+        return termFrequency.get(term).get(cursor).freq;
+    }
+
+    public double getDocLength(int docID) {
+        return docLength.get(docID);
+    }
 
     /**
      * Add term into tf table.
@@ -42,6 +62,13 @@ public class TermForm {
                 } else {
                     termFrequency.get(rawString).get(termFrequency.get(rawString).size() - 1).freq++;
                 }
+            }
+        }
+        for (String term: termFrequency.keySet()) {
+            if ((null != termFrequency.get(term)) && (termFrequency.get(term).get(termFrequency.get(term).size() - 1).docID == docID)){
+                int currTermFreq = termFrequency.get(term).get(termFrequency.get(term).size() - 1).freq;
+                if (null == docLength.get(docID)) docLength.put(docID, Math.pow(currTermFreq, 2));
+                else docLength.put(docID, docLength.get(docID) + Math.pow(currTermFreq, 2));
             }
         }
     }
