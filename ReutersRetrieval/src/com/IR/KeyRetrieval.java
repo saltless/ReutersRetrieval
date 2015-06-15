@@ -8,6 +8,15 @@ import java.util.*;
 public class KeyRetrieval {
 
     private HashMap<String, Integer> docCursor;
+    Comparator vectorComp = new Comparator() {
+        @Override
+        public int compare(Object o1, Object o2) {
+            VectorValueItem vec0 = (VectorValueItem)o1;
+            VectorValueItem vec1 = (VectorValueItem)o2;
+            if (vec0.value < vec1.value) return 1;
+            else return -1;
+        }
+    };
 
     private double calcTermFrequency(int raw) {
         return raw == 0 ? 0 : (1 + Math.log(raw));
@@ -17,6 +26,7 @@ public class KeyRetrieval {
         double cosine = 0.0;
         double queryLength = 0.0;
         for (String term : queryVector.keySet()) {
+//            System.out.print(queryVector.get(term) + ":" + docVector.get(term) + " ");
             cosine += calcTermFrequency(queryVector.get(term)) * calcTermFrequency(docVector.get(term));
             queryLength += 1.0 * Math.pow(queryVector.get(term), 2);
         }
@@ -58,7 +68,7 @@ public class KeyRetrieval {
         while (true) {
             System.out.print("[Search Key]: ");
             StringBuilder searchKey = new StringBuilder(scanner.nextLine());
-//            StringBuilder searchKey = new StringBuilder("US");
+            if (searchKey.equals("exit()")) return;
             System.out.print("[Search Result]: ");
             docCursor = new HashMap<String, Integer>();
             LinkedList<ParsedTermItem> termSet = TermParser.parseArticle(searchKey.append("\n"));
@@ -66,14 +76,17 @@ public class KeyRetrieval {
             ArrayList<VectorValueItem> evaluationList = new ArrayList<VectorValueItem>();
             for (int docID : readFiles.fileList) {
                 HashMap<String, Integer> docVector = this.getDocVector(termForm, docID, queryVector);
+//                System.out.print("Doc " + docID + " ");
                 double vectorValue = this.vectorEvaluation(queryVector, docVector, termForm.getDocLength(docID));
+//                System.out.println(vectorValue);
                 if (ConstValues.DIVIDED_BY_ZERO != vectorValue) {
                     evaluationList.add(new VectorValueItem(docID, vectorValue));
                 }
             }
-            Collections.sort(evaluationList, new vectorComp());
+            Collections.sort(evaluationList, vectorComp);
             Boolean isFound = false;
             for (int ans = 0; ans < (4 < evaluationList.size() ? 4 : evaluationList.size()); ans++){
+//                System.out.println(ans + " " + evaluationList.get(ans).value);
                 if (evaluationList.get(ans).value > 0) {
                     isFound = true;
                     System.out.println("FILE: " + evaluationList.get(ans).docID + " " + evaluationList.get(ans).value);
@@ -81,13 +94,5 @@ public class KeyRetrieval {
             }
             if (!isFound) System.out.println("No answer found!");
         }
-    }
-}
-
-class vectorComp implements Comparator {
-    public int compare(Object arg0, Object arg1) {
-        VectorValueItem vec0 = (VectorValueItem)arg0;
-        VectorValueItem vec1 = (VectorValueItem)arg1;
-        return (int)(vec1.value - vec0.value);
     }
 }

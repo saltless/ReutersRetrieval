@@ -28,9 +28,9 @@ public class ReadFiles {
 
         for (int i = 1; i <= ConstValues.TOTAL_FILE_AMOUNT; i++){
             String dir = baseDir + i + ".html";
-            System.out.println("[ Processing file " + i + ".html ]");
             File file = new File(String.valueOf(dir));
             if (file.exists()) try {
+                System.out.println("[ Processing file " + i + ".html ]");
                 fileList.addLast(i);
                 InputStream inputStream = new FileInputStream(file);
                 int next;
