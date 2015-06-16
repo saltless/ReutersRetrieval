@@ -6,8 +6,18 @@ import java.util.*;
  * Created by Rex on 15/6/12.
  */
 public class KeyRetrieval {
-
+    /**
+     * As docID in termFrequency form is in
+     * ascending order and we need to check over
+     * the whole termFrequency from, docCursor
+     * records docID on processing last time
+     */
     private HashMap<String, Integer> docCursor;
+    /**
+     * Comparator for class VectorValueItem.
+     * Result of sort will be in descending
+     * order
+     */
     Comparator vectorComp = new Comparator() {
         @Override
         public int compare(Object o1, Object o2) {
@@ -18,10 +28,23 @@ public class KeyRetrieval {
         }
     };
 
+    /**
+     * Check whether a given tf is nil in case
+     * fault occurs in log function.
+     * @param raw given tf
+     * @return zero or (1 + log tf)
+     */
     private double calcTermFrequency(int raw) {
         return raw == 0 ? 0 : (1 + Math.log(raw));
     }
 
+    /**
+     * Calculate cosine of two given vectors
+     * @param queryVector query as an evaluation vector
+     * @param docVector doc as an evaluation vector
+     * @param docLength the length of doc, for normalizing
+     * @return cosine of given vectors
+     */
     private double vectorEvaluation(HashMap<String, Integer> queryVector, HashMap<String, Integer> docVector, double docLength) {
         double cosine = 0.0;
         double queryLength = 0.0;
@@ -34,6 +57,12 @@ public class KeyRetrieval {
         return cosine / Math.sqrt(queryLength * docLength);
     }
 
+    /**
+     * Calculate the corresponding evaluation vector
+     * of given query term set
+     * @param termSet raw term set
+     * @return evaluation vector of given query term set
+     */
     private HashMap<String, Integer> getQueryVector(LinkedList<ParsedTermItem> termSet) {
         HashMap<String, Integer> queryVector = new HashMap<String, Integer>();
         for (ParsedTermItem term : termSet) {
@@ -44,6 +73,14 @@ public class KeyRetrieval {
         return queryVector;
     }
 
+    /**
+     * Calculate the corresponding evaluation vector
+     * of given doc term set
+     * @param termForm term frequency form
+     * @param docID docID on processing
+     * @param queryVector query vector on processing
+     * @return evaluation vector of given doc term set
+     */
     private HashMap<String, Integer> getDocVector(TermForm termForm, int docID, HashMap<String, Integer> queryVector) {
         HashMap<String, Integer> docVector = new HashMap<String, Integer>();
         for (String term : queryVector.keySet()) {
@@ -63,6 +100,13 @@ public class KeyRetrieval {
         return  docVector;
     }
 
+    /**
+     * Processing of retrieval, including reading
+     * from screen, calculation and print out on
+     * screen
+     * @param termForm term frequency on processing
+     * @param readFiles file list
+     */
     public void processRetrieval(TermForm termForm, ReadFiles readFiles) {
         Scanner scanner = new Scanner(System.in);
         while (true) {
