@@ -6,3 +6,6 @@
 /ReutersRetrieval/nbproject/*
 /ReutersRetrieval/build.xml
 /ReutersRetrieval/manifest.mf
+/ReutersRetrieval/build/
+
+*.swp
