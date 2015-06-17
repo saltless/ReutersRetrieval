@@ -1,8 +1,2 @@
-/.idea/*
-/ReutersRetrieval/.idea/*
-/ReutersRetrieval/out/*
-/ReutersRetrieval.iml
 
-/ReutersRetrieval/nbproject/*
-/ReutersRetrieval/build.xml
-/ReutersRetrieval/manifest.mf
+ReutersRetrieval/.idea
