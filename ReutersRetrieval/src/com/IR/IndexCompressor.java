@@ -1,12 +1,36 @@
 package com.IR;
 
 import java.lang.Math;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * The invert-index compressor
  * @author Soap
  */
 public class IndexCompressor {
+
+    static private byte[] encode(TermForm termForm) {
+        ArrayList<Byte> binary = new ArrayList<Byte>();
+        Map<String, LinkedList<DocAppearItem>> indexSet = termForm.getDocAppearPosition();
+        Map<String, ArrayList<TermFreqItem>> termFreqSet = termForm.getTermFrequency();
+        for (String word : indexSet.keySet()) {
+            int wordLength = word.length();
+            LinkedList<DocAppearItem> docs = indexSet.get(word);
+            ArrayList<TermFreqItem> tfs = termFreqSet.get(word);
+            int lastDocID = 0;
+            Iterator<DocAppearItem> docIt = docs.iterator();
+            Iterator<TermFreqItem> tfIt = tfs.iterator();
+            while (docIt.hasNext() && tfIt.hasNext())
+                int docIDInterval = item.docID - lastDocID;
+                int docPos = item.docPos;
+            }
+            if (docIt.hasNext() == true && tfIt.hasNext() == false || docIt.hasNext() == false && tfIt.hasNext() == true)
+                System.out.println("Inconsistent DocAppearItem list length and TermFreqItem list length: " + word);
+        }
+    }
 
     /**
      * Encode integer to gamma code
