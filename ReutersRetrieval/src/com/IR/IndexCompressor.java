@@ -1,6 +1,10 @@
 package com.IR;
 
 import java.lang.Math;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -12,24 +16,83 @@ import java.util.Map;
  */
 public class IndexCompressor {
 
-    static private byte[] encode(TermForm termForm) {
+    static public void compress(TermForm termForm, String filename) {
+        Byte[] binaryCode = encode(termForm);
+        byte[] compressed;
+        if (binaryCode.length % 8 == 0)
+            compressed = new byte[binaryCode.length / 8];
+        else
+            compressed = new byte[binaryCode.length / 8 + 1];
+        for (int i = 0; i < binaryCode.length; ++i) {
+            int bit = i % 8;
+            switch (bit) {
+                case 0: compressed[i / 8] |= (bit == 1) ? 0x10000000 : 0x00000000; break;
+                case 1: compressed[i / 8] |= (bit == 1) ? 0x01000000 : 0x00000000; break;
+                case 2: compressed[i / 8] |= (bit == 1) ? 0x00100000 : 0x00000000; break;
+                case 3: compressed[i / 8] |= (bit == 1) ? 0x00010000 : 0x00000000; break;
+                case 4: compressed[i / 8] |= (bit == 1) ? 0x00001000 : 0x00000000; break;
+                case 5: compressed[i / 8] |= (bit == 1) ? 0x00000100 : 0x00000000; break;
+                case 6: compressed[i / 8] |= (bit == 1) ? 0x00000010 : 0x00000000; break;
+                case 7: compressed[i / 8] |= (bit == 1) ? 0x00000001 : 0x00000000; break;
+            }
+        }
+        
+        try {
+            FileOutputStream fos = new FileOutputStream(new File(filename));
+            fos.write(compressed);
+            fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    static public TermForm uncompress(String filename) {
+        return null;
+    }
+
+    static private Byte[] encode(TermForm termForm) {
         ArrayList<Byte> binary = new ArrayList<Byte>();
         Map<String, LinkedList<DocAppearItem>> indexSet = termForm.getDocAppearPosition();
         Map<String, ArrayList<TermFreqItem>> termFreqSet = termForm.getTermFrequency();
         for (String word : indexSet.keySet()) {
-            int wordLength = word.length();
-            LinkedList<DocAppearItem> docs = indexSet.get(word);
+            ArrayList<Byte> wordLength = encodeGamma(word.length());
+            binary.addAll(wordLength);
+            for (int i = 0; i < word.length(); ++i) {
+                char c = word.charAt(i);
+                binary.addAll(encodeGamma(c));
+            }
+            
             ArrayList<TermFreqItem> tfs = termFreqSet.get(word);
-            int lastDocID = 0;
+            LinkedList<DocAppearItem> docs = indexSet.get(word);
             Iterator<DocAppearItem> docIt = docs.iterator();
             Iterator<TermFreqItem> tfIt = tfs.iterator();
-            while (docIt.hasNext() && tfIt.hasNext())
-                int docIDInterval = item.docID - lastDocID;
-                int docPos = item.docPos;
+            
+            int df = tfs.size();
+            binary.addAll(encodeGamma(df));
+            
+            int lastDocID = 0;
+            while (tfIt.hasNext() == true) {
+                TermFreqItem tfItem = tfIt.next();
+                int docID = tfItem.docID - lastDocID;
+                
+                binary.addAll(encodeGamma(docID));
+                
+                int tf = tfItem.freq;
+                for (int i = 0; i < tf; ++i) {
+                    DocAppearItem docAppearItem = docIt.next();
+                    if (docID != docAppearItem.docID - lastDocID) {
+                        System.out.println("Inconsistent DocAppearItem and TermFreqItem: " + word);
+                        return null;
+                    }
+                    int docPos = docAppearItem.docPos;
+                    binary.addAll(encodeGamma(docPos));
+                }
+                lastDocID = tfItem.docID;
             }
-            if (docIt.hasNext() == true && tfIt.hasNext() == false || docIt.hasNext() == false && tfIt.hasNext() == true)
-                System.out.println("Inconsistent DocAppearItem list length and TermFreqItem list length: " + word);
         }
+        return (Byte[])binary.toArray();
     }
 
     /**
@@ -37,21 +100,25 @@ public class IndexCompressor {
      * @param num The integer to be encoded
      * @return The byte array of gamma code, which is in big-endian mode
      */
-    static private byte[] encodeGamma(int num) {
-        if (num == 1)
-            return new byte[]{0};
+    static private ArrayList<Byte> encodeGamma(int num) {
+        if (num == 1) {
+            ArrayList<Byte> gamma = new ArrayList<Byte>();
+            gamma.add((byte)0);
+            return gamma;
+        }
 
         int length = log(2, num);
-        byte[] gamma =  new byte[2*length + 1];
+        ArrayList<Byte> gamma = new ArrayList<Byte>();
+        gamma.add(2*length + 1, (byte)0);
         int base = 1;
         for (int i = 0; i < length; ++i) {
             base <<= 1;
-            gamma[i] = 1;
+            gamma.set(i, (byte)1);
         }
-        gamma[length] = 0;
+        gamma.set(length, (byte)0);
         byte[] offset = intToBinary(num - base, length);
         for (int i = length + 1; i < 2*length + 1; ++i)
-            gamma[i] = offset[i - length - 1];
+            gamma.set(1, offset[i - length - 1]);
         return gamma;
     }
 
@@ -60,15 +127,15 @@ public class IndexCompressor {
      * @param num The gamma code to be decoded
      * @return The origin integer
      */
-    static private int decodeGamma(byte[] gamma) {
+    static private int decodeGamma(ArrayList<Byte> gamma) {
         int num = 1;
         int cursor = 0;
-        while (gamma[cursor++] == 1)
+        while (gamma.get(cursor++) == 1)
             num <<= 1;
         int length = cursor - 1;
         byte[] offset = new byte[length];
         for (int i = 0; i < length; ++i)
-            offset[i] = gamma[length + i + 1];
+            offset[i] = gamma.get(length + i + 1);
         num += binaryToInt(offset);
         return num;
     }

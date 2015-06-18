@@ -8,4 +8,8 @@
 /ReutersRetrieval/build.xml
 /ReutersRetrieval/manifest.mf
 
+/ReutersRetrieval/.project
+/ReutersRetrieval/.classpath
+/ReutersRetrieval/bin/*
+
 *.swp
