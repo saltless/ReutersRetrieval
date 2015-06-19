@@ -20,6 +20,22 @@ public class TermForm {
     public HashMap<String, LinkedList<DocAppearItem>> getDocAppearPosition() { return docAppearPosition; }
     public HashMap<Integer, Double>                   getDocLength()         { return docLength; }
 
+    public void setDocFrequency(HashMap<String, Integer> docFrequency) {
+        this.docFrequency = docFrequency;
+    }
+
+    public void setTermFrequency(HashMap<String, ArrayList<TermFreqItem>> termFrequency) {
+        this.termFrequency = termFrequency;
+    }
+
+    public void setDocAppearPosition(HashMap<String, LinkedList<DocAppearItem>> docAppearPosition) {
+        this.docAppearPosition = docAppearPosition;
+    }
+
+    public void setDocLength(HashMap<Integer, Double> docLength) {
+        this.docLength = docLength;
+    }
+
     public int getTermFrequencyDocLength(String term) {
         if (null == termFrequency.get(term)) return -1;
         return termFrequency.get(term).size();
