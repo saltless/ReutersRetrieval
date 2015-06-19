@@ -10,10 +10,31 @@ import java.util.LinkedList;
 
 public class TermForm {
 
-    private HashMap<String, Integer> docFrequency = new HashMap<String, Integer>();
-    private HashMap<String, ArrayList<TermFreqItem>> termFrequency = new HashMap<String, ArrayList<TermFreqItem>>();
+    private HashMap<String, Integer>                   docFrequency      = new HashMap<String, Integer>();
+    private HashMap<String, ArrayList<TermFreqItem>>   termFrequency     = new HashMap<String, ArrayList<TermFreqItem>>();
     private HashMap<String, LinkedList<DocAppearItem>> docAppearPosition = new HashMap<String, LinkedList<DocAppearItem>>();
-    private HashMap<Integer, Double> docLength = new HashMap<Integer, Double>();
+    private HashMap<Integer, Double>                   docLength         = new HashMap<Integer, Double>();
+
+    public HashMap<String, Integer>                   getDocFrequency()      { return docFrequency; }
+    public HashMap<String, ArrayList<TermFreqItem>>   getTermFrequency()     { return termFrequency; }
+    public HashMap<String, LinkedList<DocAppearItem>> getDocAppearPosition() { return docAppearPosition; }
+    public HashMap<Integer, Double>                   getDocLength()         { return docLength; }
+
+    public void setDocFrequency(HashMap<String, Integer> docFrequency) {
+        this.docFrequency = docFrequency;
+    }
+
+    public void setTermFrequency(HashMap<String, ArrayList<TermFreqItem>> termFrequency) {
+        this.termFrequency = termFrequency;
+    }
+
+    public void setDocAppearPosition(HashMap<String, LinkedList<DocAppearItem>> docAppearPosition) {
+        this.docAppearPosition = docAppearPosition;
+    }
+
+    public void setDocLength(HashMap<Integer, Double> docLength) {
+        this.docLength = docLength;
+    }
 
     public int getTermFrequencyDocLength(String term) {
         if (null == termFrequency.get(term)) return -1;
