@@ -198,7 +198,7 @@ public class IndexCompressor {
 
     /**
      * Decode gamma code back to integer
-     * @param num The gamma code to be decoded, use Byte to store one bit
+     * @param gamma The gamma code to be decoded, use Byte to store one bit
      * @return The origin integer
      */
     static private Object[] decodeGamma(ArrayList<Byte> gamma) {
@@ -261,52 +261,52 @@ public class IndexCompressor {
         return (int)(Math.log(original) / Math.log(base));
     }
 
-    public static void main(String[] args) {
-        ArrayList<Byte> gamma;
-        
-        gamma = encodeGamma(1);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
-        
-        gamma = encodeGamma(2);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
-        
-        gamma = encodeGamma(3);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
-        
-        gamma = encodeGamma(4);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
-        
-        gamma = encodeGamma(9);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
-        
-        gamma = encodeGamma(13);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
-        
-        gamma = encodeGamma(24);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
-        
-        gamma = encodeGamma(511);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
-        
-        gamma = encodeGamma(1025);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
-    }
+//    public static void main(String[] args) {
+//        ArrayList<Byte> gamma;
+//
+//        gamma = encodeGamma(1);
+//        for (Byte b : gamma)
+//            System.out.print(b);
+//        System.out.println(" " + decodeGamma(gamma)[0]);
+//
+//        gamma = encodeGamma(2);
+//        for (Byte b : gamma)
+//            System.out.print(b);
+//        System.out.println(" " + decodeGamma(gamma)[0]);
+//
+//        gamma = encodeGamma(3);
+//        for (Byte b : gamma)
+//            System.out.print(b);
+//        System.out.println(" " + decodeGamma(gamma)[0]);
+//
+//        gamma = encodeGamma(4);
+//        for (Byte b : gamma)
+//            System.out.print(b);
+//        System.out.println(" " + decodeGamma(gamma)[0]);
+//
+//        gamma = encodeGamma(9);
+//        for (Byte b : gamma)
+//            System.out.print(b);
+//        System.out.println(" " + decodeGamma(gamma)[0]);
+//
+//        gamma = encodeGamma(13);
+//        for (Byte b : gamma)
+//            System.out.print(b);
+//        System.out.println(" " + decodeGamma(gamma)[0]);
+//
+//        gamma = encodeGamma(24);
+//        for (Byte b : gamma)
+//            System.out.print(b);
+//        System.out.println(" " + decodeGamma(gamma)[0]);
+//
+//        gamma = encodeGamma(511);
+//        for (Byte b : gamma)
+//            System.out.print(b);
+//        System.out.println(" " + decodeGamma(gamma)[0]);
+//
+//        gamma = encodeGamma(1025);
+//        for (Byte b : gamma)
+//            System.out.print(b);
+//        System.out.println(" " + decodeGamma(gamma)[0]);
+//    }
 }

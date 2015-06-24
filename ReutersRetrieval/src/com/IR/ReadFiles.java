@@ -13,33 +13,53 @@ public class ReadFiles {
     public LinkedList<Integer> fileList = new LinkedList<Integer>();
     /**
      * Construct function
-     * @param dir
+     * @param dir Given base dir
      */
     public ReadFiles(String dir){
         baseDir = dir;
     }
 
     /**
+     * Get pre-processed file list.
+     * @param dir Directory of file list.
+     */
+    public void getFileList(String dir){
+        File file = new File(String.valueOf(dir));
+        if (file.exists()) try {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String next;
+            while ((next = reader.readLine()) != null)
+                fileList.addLast(Integer.parseInt(next));
+            reader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } else {
+            System.out.println("File list not found.");
+        }
+    }
+    /**
      * Load data from files, and check whether it
      * contains letter/digit/slash sign.
-     * @param termForm
+     * @param termForm info forms needed
      */
     public void loadFiles(TermForm termForm) {
 
-        for (int i = 1; i <= ConstValues.TOTAL_FILE_AMOUNT; i++){
+        for (int i : fileList){
             String dir = baseDir + i + ".html";
             File file = new File(String.valueOf(dir));
             if (file.exists()) try {
                 System.out.println("[ Processing file " + i + ".html ]");
-                fileList.addLast(i);
                 InputStream inputStream = new FileInputStream(file);
                 int next;
                 StringBuilder article = new StringBuilder();
                 while ((next = inputStream.read()) != -1) article.append((char) next);
                 LinkedList<ParsedTermItem> parsedArticle = TermParser.parseArticle(article);
                 termForm.addTerm(i, parsedArticle);
+                inputStream.close();
             } catch (Exception e) {
                 e.printStackTrace();
+            } else {
+                fileList.remove(i);
             }
         }
     }
