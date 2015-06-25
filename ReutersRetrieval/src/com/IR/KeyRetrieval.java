@@ -23,19 +23,43 @@ public class KeyRetrieval {
         public int compare(Object o1, Object o2) {
             VectorValueItem vec0 = (VectorValueItem)o1;
             VectorValueItem vec1 = (VectorValueItem)o2;
-            if (vec0.value < vec1.value) return 1;
-            else return -1;
+            if ((vec1.value - vec0.value) > 0.0000000001) return 1;
+            else if ((vec0.value - vec1.value) > 0.0000000001) return -1;
+            else return 0;
         }
     };
 
     /**
-     * Check whether a given tf is nil in case
+     * Transform log(e)(n) into log(base)(n)
+     * @param raw n
+     * @param base target base
+     * @return answer
+     */
+    private static double changeLogarithm(double raw, double base) {
+        return Math.log(raw) / Math.log(base);
+    }
+
+    /**
+     * Calculate tf value. Check whether
+     * a given tf is nil in case
      * fault occurs in log function.
      * @param raw given tf
      * @return zero or (1 + log tf)
      */
     private double calcTermFrequency(int raw) {
-        return raw == 0 ? 0 : (1 + Math.log(raw));
+        return raw <= 0 ? 0 : (1 + changeLogarithm((double) raw, 10));
+    }
+
+    /**
+     * Calculate idf value. Check whether
+     * a given df is nil in case fault
+     * occurs in log function.
+     * @param docSetSize size of the whole doc set.
+     * @param docFrequency doc frequency of a term.
+     * @return zero or log(N/df)
+     */
+    private double calcInverseDocFrequency(int docSetSize, int docFrequency){
+        return docFrequency <= 0 ? 0 : changeLogarithm((double)docSetSize / (double)docFrequency, 10);
     }
 
     /**
@@ -45,12 +69,12 @@ public class KeyRetrieval {
      * @param docLength the length of doc, for normalizing
      * @return cosine of given vectors
      */
-    private double vectorEvaluation(HashMap<String, Integer> queryVector, HashMap<String, Integer> docVector, double docLength) {
+    private double vectorEvaluation(HashMap<String, Integer> queryVector, HashMap<String, Integer> docVector, HashMap<String, Double> iDocFrequency,double docLength) {
         double cosine = 0.0;
         double queryLength = 0.0;
         for (String term : queryVector.keySet()) {
 //            System.out.print(queryVector.get(term) + ":" + docVector.get(term) + " ");
-            cosine += calcTermFrequency(queryVector.get(term)) * calcTermFrequency(docVector.get(term));
+            cosine += calcTermFrequency(queryVector.get(term)) * calcTermFrequency(docVector.get(term)) * iDocFrequency.get(term);
             queryLength += 1.0 * Math.pow(queryVector.get(term), 2);
         }
         if ((0 == queryLength) || (0 == docLength)) return ConstValues.DIVIDED_BY_ZERO;
@@ -66,9 +90,9 @@ public class KeyRetrieval {
     private HashMap<String, Integer> getQueryVector(LinkedList<ParsedTermItem> termSet) {
         HashMap<String, Integer> queryVector = new HashMap<String, Integer>();
         for (ParsedTermItem term : termSet) {
-            if (null == queryVector.get(term))
+            if (null == queryVector.get(term.term))
                 queryVector.put(term.term, 1);
-            else queryVector.put(term.term, queryVector.get(term) + 1);
+            else queryVector.put(term.term, queryVector.get(term.term) + 1);
         }
         return queryVector;
     }
@@ -90,7 +114,7 @@ public class KeyRetrieval {
                     docCursor.put(term, 0);
                     docVector.put(term, termForm.getTermFrequency(term, docCursor.get(term)));
                 }
-            } else if (docCursor.get(term) + 1 < termForm.getTermFrequencyDocLength(term)){
+            } else if (docCursor.get(term) + 1 < termForm.getDocFrequency(term)){
                 if (docID == termForm.getTermFrequencyDocID(term, docCursor.get(term) + 1)){
                     docCursor.put(term, docCursor.get(term) + 1);
                     docVector.put(term, termForm.getTermFrequency(term, docCursor.get(term)));
@@ -98,6 +122,23 @@ public class KeyRetrieval {
             }
         }
         return  docVector;
+    }
+
+    /**
+     * Get idf vector.
+     * @param termForm termForm contains tf table,
+     *                 in which we can get df.
+     * @param queryVector query vector
+     * @param docSetSize size of total doc set
+     * @return idf vector
+     */
+    private HashMap<String, Double> getInverseDocFrequency(TermForm termForm, HashMap<String, Integer> queryVector, int docSetSize){
+
+        HashMap<String, Double> iDocFrequency = new HashMap<String, Double>();
+        for (String term : queryVector.keySet()){
+            iDocFrequency.put(term, calcInverseDocFrequency(docSetSize, termForm.getDocFrequency(term)));
+        }
+        return iDocFrequency;
     }
 
     /**
@@ -112,19 +153,22 @@ public class KeyRetrieval {
         while (true) {
             System.out.print("[Search Key]: ");
             StringBuilder searchKey = new StringBuilder(scanner.nextLine());
-            if (searchKey.equals("exit()")) return;
+            if (searchKey.equals(new StringBuilder("exit()"))) return;
             System.out.print("[Search Result]: ");
             docCursor = new HashMap<String, Integer>();
             LinkedList<ParsedTermItem> termSet = TermParser.parseArticle(searchKey.append("\n"));
             HashMap<String, Integer> queryVector = this.getQueryVector(termSet);
             ArrayList<VectorValueItem> evaluationList = new ArrayList<VectorValueItem>();
+            HashMap<String, Double> iDocFrequency = this.getInverseDocFrequency(termForm, queryVector, readFiles.fileList.size());
+            for (String term: iDocFrequency.keySet()){
+                System.out.println(term + ": " + iDocFrequency.get(term));
+            }
             for (int docID : readFiles.fileList) {
                 HashMap<String, Integer> docVector = this.getDocVector(termForm, docID, queryVector);
-//                System.out.print("Doc " + docID + " ");
-                double vectorValue = this.vectorEvaluation(queryVector, docVector, termForm.getDocLength(docID));
-//                System.out.println(vectorValue);
+                double vectorValue = this.vectorEvaluation(queryVector, docVector, iDocFrequency, termForm.getDocLength(docID));
                 if (ConstValues.DIVIDED_BY_ZERO != vectorValue) {
-                    evaluationList.add(new VectorValueItem(docID, vectorValue));
+                    evaluationList.add(new VectorValueItem(docID, vectorValue + termForm.getAdditionalGrade(docID)));
+//                    System.out.println("Doc " + docID + ": " + (vectorValue + termForm.getAdditionalGrade(docID)));
                 }
             }
             Collections.sort(evaluationList, vectorComp);

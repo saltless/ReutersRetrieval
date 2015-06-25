@@ -1,6 +1,7 @@
 package com.IR;
 
 import java.io.*;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 /**
@@ -43,24 +44,24 @@ public class ReadFiles {
      * @param termForm info forms needed
      */
     public void loadFiles(TermForm termForm) {
-
+        LinkedList<Integer> newFileList = new LinkedList<Integer>();
         for (int i : fileList){
             String dir = baseDir + i + ".html";
             File file = new File(String.valueOf(dir));
             if (file.exists()) try {
                 System.out.println("[ Processing file " + i + ".html ]");
+                newFileList.add(i);
                 InputStream inputStream = new FileInputStream(file);
-                int next;
                 StringBuilder article = new StringBuilder();
+                int next;
                 while ((next = inputStream.read()) != -1) article.append((char) next);
                 LinkedList<ParsedTermItem> parsedArticle = TermParser.parseArticle(article);
                 termForm.addTerm(i, parsedArticle);
                 inputStream.close();
             } catch (Exception e) {
                 e.printStackTrace();
-            } else {
-                fileList.remove(i);
             }
         }
+        fileList = newFileList;
     }
 }

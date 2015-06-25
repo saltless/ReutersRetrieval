@@ -10,19 +10,14 @@ import java.util.LinkedList;
 
 public class TermForm {
 
-    private HashMap<String, Integer>                   docFrequency      = new HashMap<String, Integer>();
     private HashMap<String, ArrayList<TermFreqItem>>   termFrequency     = new HashMap<String, ArrayList<TermFreqItem>>();
     private HashMap<String, LinkedList<DocAppearItem>> docAppearPosition = new HashMap<String, LinkedList<DocAppearItem>>();
     private HashMap<Integer, Double>                   docLength         = new HashMap<Integer, Double>();
+    private HashMap<Integer, Double>                   AdditionalGrade   = new HashMap<Integer, Double>();
 
-    public HashMap<String, Integer>                   getDocFrequency()      { return docFrequency; }
     public HashMap<String, ArrayList<TermFreqItem>>   getTermFrequency()     { return termFrequency; }
     public HashMap<String, LinkedList<DocAppearItem>> getDocAppearPosition() { return docAppearPosition; }
     public HashMap<Integer, Double>                   getDocLength()         { return docLength; }
-
-    public void setDocFrequency(HashMap<String, Integer> docFrequency) {
-        this.docFrequency = docFrequency;
-    }
 
     public void setTermFrequency(HashMap<String, ArrayList<TermFreqItem>> termFrequency) {
         this.termFrequency = termFrequency;
@@ -36,7 +31,7 @@ public class TermForm {
         this.docLength = docLength;
     }
 
-    public int getTermFrequencyDocLength(String term) {
+    public int getDocFrequency(String term) {
         if (null == termFrequency.get(term)) return -1;
         return termFrequency.get(term).size();
     }
@@ -55,21 +50,25 @@ public class TermForm {
         return docLength.get(docID);
     }
 
+    public double getAdditionalGrade(int docID){
+        if (AdditionalGrade.get(docID) != null){
+            return AdditionalGrade.get(docID);
+        } else return 0;
+    }
+
     /**
      * Add term into tf table.
      * If term does not exist,
      * create it.
      * @param docID number of document
      * @param parsedArticle parsed terms
-     * @return docPos after adding
      */
     public void addTerm(int docID, LinkedList<ParsedTermItem> parsedArticle){
-
+        if (parsedArticle.size() > 50) AdditionalGrade.put(docID, ConstValues.LONG_ARTICLE_BONUS);
         for (ParsedTermItem termItem : parsedArticle){
             String rawString = termItem.term;
             int docPos = termItem.docPos;
             if (null == termFrequency.get(rawString)){
-                docFrequency.put(rawString, 1);
                 termFrequency.put(rawString, new ArrayList<TermFreqItem>());
                 termFrequency.get(rawString).add(new TermFreqItem(docID, 1));
                 docAppearPosition.put(rawString, new LinkedList<DocAppearItem>());
@@ -78,8 +77,6 @@ public class TermForm {
                 docAppearPosition.get(rawString).addLast(new DocAppearItem(docID, docPos));
                 if (termFrequency.get(rawString).get(termFrequency.get(rawString).size() - 1).docID != docID){
                     termFrequency.get(rawString).add(new TermFreqItem(docID, 1));
-                    int currDocFrequency = docFrequency.get(rawString);
-                    docFrequency.put(rawString, currDocFrequency + 1);
                 } else {
                     termFrequency.get(rawString).get(termFrequency.get(rawString).size() - 1).freq++;
                 }
@@ -99,7 +96,7 @@ public class TermForm {
      */
     public void printTable(){
         for (String term : termFrequency.keySet()){
-            System.out.print(term + " => df = " + docFrequency.get(term) + " tf = " + termFrequency.get(term).get(0).freq + "\n\t");
+            System.out.print(term + " => df = " + termFrequency.get(term).size() + " tf = " + termFrequency.get(term).get(0).freq + "\n\t");
             for (DocAppearItem item : docAppearPosition.get(term)){
                 System.out.print(item.docID + ":" + item.docPos + " ");
             }

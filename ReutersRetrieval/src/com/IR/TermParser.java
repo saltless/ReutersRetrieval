@@ -127,13 +127,15 @@ public class TermParser {
     }
 
     /**
-     * Parse a given article into terms
+     * Parse a given article into terms. Bi-word used.
+     * e,g. 'a b c' => 'a' 'b' 'c' 'a b' 'b c'
      * @param article article input from file
      * @return terms and their position in article
      */
     public static LinkedList<ParsedTermItem> parseArticle(StringBuilder article) {
 
         LinkedList<ParsedTermItem> parsedArticle = new LinkedList<ParsedTermItem>();
+        StringBuilder prevTerm = new StringBuilder("");
         TermParser.removeBrackets(article);
 
         boolean digitAppear = false;
@@ -151,6 +153,11 @@ public class TermParser {
                     LinkedList<String> parsedTerm = TermParser.parseTerm(digitAppear, letteAppear, slashAppear, term);
                     for (String termItem : parsedTerm){
                         parsedArticle.addLast(new ParsedTermItem(termItem, ++docPos));
+                        if (prevTerm.length() > 0) {
+                            prevTerm.append(" ").append(termItem);
+                            parsedArticle.addLast(new ParsedTermItem(prevTerm.toString(), docPos - 1));
+                        }
+                        prevTerm.delete(0, prevTerm.length()).append(termItem);
                     }
                 }
                 term = new StringBuilder();
