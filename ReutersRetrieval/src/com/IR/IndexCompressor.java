@@ -1,7 +1,8 @@
 package com.IR;
 
-import java.lang.Math;
 import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileInputStream;
@@ -22,28 +23,63 @@ public class IndexCompressor {
     static public void compress(TermForm termForm, String filename) {
         Object[] uncompressed = encode(termForm);
         byte[] compressed;
-        if (uncompressed.length % 8 == 0)
+        if (uncompressed.length % 8 == 0) {
             compressed = new byte[uncompressed.length / 8];
-        else
+        } else {
             compressed = new byte[uncompressed.length / 8 + 1];
+            compressed[compressed.length - 1] |= (0xFF >>> (uncompressed.length % 8));
+        }
         for (int i = 0; i < uncompressed.length; ++i) {
             int bit = i % 8;
             switch (bit) {
-                case 0: compressed[i / 8] |= ((Byte)uncompressed[bit] == 1) ? 0x10000000 : 0x00000000; break;
-                case 1: compressed[i / 8] |= ((Byte)uncompressed[bit] == 1) ? 0x01000000 : 0x00000000; break;
-                case 2: compressed[i / 8] |= ((Byte)uncompressed[bit] == 1) ? 0x00100000 : 0x00000000; break;
-                case 3: compressed[i / 8] |= ((Byte)uncompressed[bit] == 1) ? 0x00010000 : 0x00000000; break;
-                case 4: compressed[i / 8] |= ((Byte)uncompressed[bit] == 1) ? 0x00001000 : 0x00000000; break;
-                case 5: compressed[i / 8] |= ((Byte)uncompressed[bit] == 1) ? 0x00000100 : 0x00000000; break;
-                case 6: compressed[i / 8] |= ((Byte)uncompressed[bit] == 1) ? 0x00000010 : 0x00000000; break;
-                case 7: compressed[i / 8] |= ((Byte)uncompressed[bit] == 1) ? 0x00000001 : 0x00000000; break;
+                case 0: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x80 : 0); break;
+                case 1: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x40 : 0); break;
+                case 2: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x20 : 0); break;
+                case 3: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x10 : 0); break;
+                case 4: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x08 : 0); break;
+                case 5: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x04 : 0); break;
+                case 6: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x02 : 0); break;
+                case 7: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x01 : 0); break;
             }
         }
         
+        // write invert-index file
         try {
-            FileOutputStream fos = new FileOutputStream(new File(filename));
+            FileOutputStream fos = new FileOutputStream(filename + ".idx");
             fos.write(compressed);
             fos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // write doc-length file without compressing
+        try {
+            DataOutputStream dos = new DataOutputStream(new FileOutputStream(filename + ".dl"));
+            Map<Integer, Double> docLength = termForm.getDocLength();
+            dos.writeInt(docLength.size());
+            for (int i : docLength.keySet()) {
+                dos.writeInt(i);
+                dos.writeDouble(docLength.get(i));
+            }
+            dos.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // write additional-grade file without compressing
+        try {
+            DataOutputStream dos = new DataOutputStream(new FileOutputStream(filename + ".ag"));
+            Map<Integer, Double> additionalGrade = termForm.getAdditionalGrade();
+            dos.writeInt(additionalGrade.size());
+            for (int i : additionalGrade.keySet()) {
+                dos.writeInt(i);
+                dos.writeDouble(additionalGrade.get(i));
+            }
+            dos.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -54,11 +90,25 @@ public class IndexCompressor {
     static public TermForm uncompress(String filename) {
         ArrayList<Byte> compressed = null;
         try {
-            // read the file
-            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(new File(filename)));
-            byte b;
+            // read the invert-index file
+            File file = new File(filename + ".idx");
+            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+            long length = file.length();
             compressed = new ArrayList<Byte>();
-            while ((b = (byte)bis.read()) != -1)
+            while (length >= 4096) {
+                byte[] bytes = new byte[4096];
+                int count = 0;
+                while (count != 4096)
+                    count += bis.read(bytes, count, 4096 - count);
+                length -= 4096;
+                for (byte b : bytes)
+                    compressed.add(b);
+            }
+            byte[] bytes = new byte[(int)length];
+            int count = 0;
+            while (count != length)
+                count += bis.read(bytes, count, (int)length - count);
+            for (byte b : bytes)
                 compressed.add(b);
             bis.close();
         } catch (FileNotFoundException e) {
@@ -73,14 +123,14 @@ public class IndexCompressor {
         // uncompress
         ArrayList<Byte> uncompressed = new ArrayList<Byte>();
         for (byte compressedByte : compressed) {
-            uncompressed.add((byte)(compressedByte & 0x10000000));
-            uncompressed.add((byte)(compressedByte & 0x01000000));
-            uncompressed.add((byte)(compressedByte & 0x00100000));
-            uncompressed.add((byte)(compressedByte & 0x00010000));
-            uncompressed.add((byte)(compressedByte & 0x00001000));
-            uncompressed.add((byte)(compressedByte & 0x00000100));
-            uncompressed.add((byte)(compressedByte & 0x00000010));
-            uncompressed.add((byte)(compressedByte & 0x00000001));
+            uncompressed.add((byte)((compressedByte & 0x80) >>> 7));
+            uncompressed.add((byte)((compressedByte & 0x40) >>> 6));
+            uncompressed.add((byte)((compressedByte & 0x20) >>> 5));
+            uncompressed.add((byte)((compressedByte & 0x10) >>> 4));
+            uncompressed.add((byte)((compressedByte & 0x08) >>> 3));
+            uncompressed.add((byte)((compressedByte & 0x04) >>> 2));
+            uncompressed.add((byte)((compressedByte & 0x02) >>> 1));
+            uncompressed.add((byte)((compressedByte & 0x01) >>> 0));
         }
         
         // decode
@@ -99,26 +149,58 @@ public class IndexCompressor {
             String word = new String(charSequence);
             int df = (Integer)intArray[cursor++];
             docFrequency.put(word, df);
+            termFrequency.put(word, new ArrayList<TermFreqItem>());
+            docAppearPosition.put(word, new LinkedList<DocAppearItem>());
             
+            int lastDocID = 0;
             for (int i = 0; i < df; ++i) {
-                int docID = (Integer)intArray[cursor++];
+                int docID = (Integer)intArray[cursor++] + lastDocID;
                 int tf = (Integer)intArray[cursor++];
                 TermFreqItem tfItem = new TermFreqItem(docID, tf);
-                termFrequency.put(word, new ArrayList<TermFreqItem>());
                 termFrequency.get(word).add(tfItem);
                 
-                docAppearPosition.put(word, new LinkedList<DocAppearItem>());
                 for (int j = 0; j < tf; ++j) {
                     int docPos = (Integer)intArray[cursor++];
                     DocAppearItem docAppearItem = new DocAppearItem(docID, docPos);
                     docAppearPosition.get(word).add(docAppearItem);
                 }
+                lastDocID = docID;
             }
         }
         TermForm termForm = new TermForm();
         termForm.setTermFrequency(termFrequency);
-        termForm.setDocFrequency(docFrequency);
         termForm.setDocAppearPosition(docAppearPosition);
+
+        // read the doc-length file
+        try {
+            DataInputStream dis = new DataInputStream(new FileInputStream(filename + ".dl"));
+            HashMap<Integer, Double> docLength = new HashMap<Integer, Double>();
+            int size = dis.readInt();
+            for (int i = 0; i < size; ++i)
+                docLength.put(dis.readInt(), dis.readDouble());
+            dis.close();
+            termForm.setDocLength(docLength);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        // read the additional-grade file
+        try {
+            DataInputStream dis = new DataInputStream(new FileInputStream(filename + ".ag"));
+            HashMap<Integer, Double> additionalGrade = new HashMap<Integer, Double>();
+            int size = dis.readInt();
+            for (int i = 0; i < size; ++i)
+                additionalGrade.put(dis.readInt(), dis.readDouble());
+            dis.close();
+            termForm.setAdditionalGrade(additionalGrade);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return termForm;
     }
 
@@ -137,22 +219,21 @@ public class IndexCompressor {
             
             ArrayList<TermFreqItem> tfs = termFreqSet.get(word);
             LinkedList<DocAppearItem> docs = indexSet.get(word);
-            Iterator<DocAppearItem> docIt = docs.iterator();
             Iterator<TermFreqItem> tfIt = tfs.iterator();
+            Iterator<DocAppearItem> docIt = docs.iterator();
             
             // encode the df
             int df = tfs.size();
             binary.addAll(encodeGamma(df));
-            
+
             // encode all the tfs
             int lastDocID = 0;
             while (tfIt.hasNext() == true) {
                 TermFreqItem tfItem = tfIt.next();
                 int docID = tfItem.docID - lastDocID;
-                
-                binary.addAll(encodeGamma(docID));
-                
                 int tf = tfItem.freq;
+                binary.addAll(encodeGamma(docID));
+                binary.addAll(encodeGamma(tf));
                 for (int i = 0; i < tf; ++i) {
                     DocAppearItem docAppearItem = docIt.next();
                     if (docID != docAppearItem.docID - lastDocID) {
@@ -212,6 +293,10 @@ public class IndexCompressor {
                 int num = 1;
                 int length = 0;
                 while (gamma.get(cursor++) == 1) {
+                    if (cursor == gamma.size()) {
+                        length = 0;
+                        break;
+                    }
                     ++length;
                     num <<= 1;
                 }
@@ -261,52 +346,62 @@ public class IndexCompressor {
         return (int)(Math.log(original) / Math.log(base));
     }
 
-//    public static void main(String[] args) {
-//        ArrayList<Byte> gamma;
-//
-//        gamma = encodeGamma(1);
-//        for (Byte b : gamma)
-//            System.out.print(b);
-//        System.out.println(" " + decodeGamma(gamma)[0]);
-//
-//        gamma = encodeGamma(2);
-//        for (Byte b : gamma)
-//            System.out.print(b);
-//        System.out.println(" " + decodeGamma(gamma)[0]);
-//
-//        gamma = encodeGamma(3);
-//        for (Byte b : gamma)
-//            System.out.print(b);
-//        System.out.println(" " + decodeGamma(gamma)[0]);
-//
-//        gamma = encodeGamma(4);
-//        for (Byte b : gamma)
-//            System.out.print(b);
-//        System.out.println(" " + decodeGamma(gamma)[0]);
-//
-//        gamma = encodeGamma(9);
-//        for (Byte b : gamma)
-//            System.out.print(b);
-//        System.out.println(" " + decodeGamma(gamma)[0]);
-//
-//        gamma = encodeGamma(13);
-//        for (Byte b : gamma)
-//            System.out.print(b);
-//        System.out.println(" " + decodeGamma(gamma)[0]);
-//
-//        gamma = encodeGamma(24);
-//        for (Byte b : gamma)
-//            System.out.print(b);
-//        System.out.println(" " + decodeGamma(gamma)[0]);
-//
-//        gamma = encodeGamma(511);
-//        for (Byte b : gamma)
-//            System.out.print(b);
-//        System.out.println(" " + decodeGamma(gamma)[0]);
-//
-//        gamma = encodeGamma(1025);
-//        for (Byte b : gamma)
-//            System.out.print(b);
-//        System.out.println(" " + decodeGamma(gamma)[0]);
-//    }
+    public static void main(String[] args) {
+        ArrayList<Byte> gamma;
+
+        gamma = encodeGamma(1);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(2);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(3);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(4);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(9);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(13);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(24);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(511);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(1025);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(482);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+
+        gamma = encodeGamma(511);
+        for (Byte b : gamma)
+            System.out.print(b);
+        System.out.println(" " + decodeGamma(gamma)[0]);
+    }
 }
