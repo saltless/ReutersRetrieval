@@ -16,7 +16,7 @@ public class Main {
         //termForm.printTable();
         
         IndexCompressor.compress(termForm, ConstValues.INDEX_DIR);
-        termForm = IndexCompressor.uncompress(ConstValues.INDEX_DIR);
+        //termForm = IndexCompressor.uncompress(ConstValues.INDEX_DIR);
         //termForm.printTable();
         
         //keyRetrieval.processRetrieval(termForm, readFiles);

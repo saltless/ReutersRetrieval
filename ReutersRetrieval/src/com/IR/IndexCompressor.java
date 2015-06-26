@@ -21,7 +21,8 @@ import java.util.Map;
 public class IndexCompressor {
 
     static public void compress(TermForm termForm, String filename) {
-        Object[] uncompressed = encode(termForm);
+        ArrayList<Byte> uncompressed = encode(termForm);
+        /*
         byte[] compressed;
         if (uncompressed.length % 8 == 0) {
             compressed = new byte[uncompressed.length / 8];
@@ -32,20 +33,31 @@ public class IndexCompressor {
         for (int i = 0; i < uncompressed.length; ++i) {
             int bit = i % 8;
             switch (bit) {
-                case 0: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x80 : 0); break;
-                case 1: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x40 : 0); break;
-                case 2: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x20 : 0); break;
-                case 3: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x10 : 0); break;
-                case 4: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x08 : 0); break;
-                case 5: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x04 : 0); break;
-                case 6: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x02 : 0); break;
-                case 7: compressed[i / 8] |= ((Byte)uncompressed[i] == 1 ? 0x01 : 0); break;
+                case 0: compressed[i / 8] |= ((byte)uncompressed[i] == 1 ? 0x80 : 0); break;
+                case 1: compressed[i / 8] |= ((byte)uncompressed[i] == 1 ? 0x40 : 0); break;
+                case 2: compressed[i / 8] |= ((byte)uncompressed[i] == 1 ? 0x20 : 0); break;
+                case 3: compressed[i / 8] |= ((byte)uncompressed[i] == 1 ? 0x10 : 0); break;
+                case 4: compressed[i / 8] |= ((byte)uncompressed[i] == 1 ? 0x08 : 0); break;
+                case 5: compressed[i / 8] |= ((byte)uncompressed[i] == 1 ? 0x04 : 0); break;
+                case 6: compressed[i / 8] |= ((byte)uncompressed[i] == 1 ? 0x02 : 0); break;
+                case 7: compressed[i / 8] |= ((byte)uncompressed[i] == 1 ? 0x01 : 0); break;
             }
         }
+        */
         
         // write invert-index file
         try {
             FileOutputStream fos = new FileOutputStream(filename + ".idx");
+            int blockSize = 40960;
+            for (int i = 0; i < uncompressed.size()/blockSize; ++i) {
+                byte[] compressed = new byte[blockSize];
+                for (int j = 0; j < blockSize; ++j)
+                    compressed[j] = uncompressed.get(i*blockSize + j);
+                fos.write(compressed);
+            }
+            byte[] compressed = new byte[uncompressed.size()%blockSize];
+            for (int j = 0; j < uncompressed.size()%blockSize; ++j)
+                compressed[j] = uncompressed.get(uncompressed.size()/blockSize*blockSize + j);
             fos.write(compressed);
             fos.close();
         } catch (FileNotFoundException e) {
@@ -95,12 +107,13 @@ public class IndexCompressor {
             BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
             long length = file.length();
             compressed = new ArrayList<Byte>();
-            while (length >= 4096) {
-                byte[] bytes = new byte[4096];
+            int blockSize = 4096;
+            while (length >= blockSize) {
+                byte[] bytes = new byte[blockSize];
                 int count = 0;
-                while (count != 4096)
-                    count += bis.read(bytes, count, 4096 - count);
-                length -= 4096;
+                while (count != blockSize)
+                    count += bis.read(bytes, count, blockSize - count);
+                length -= blockSize;
                 for (byte b : bytes)
                     compressed.add(b);
             }
@@ -121,6 +134,7 @@ public class IndexCompressor {
             return null;
             
         // uncompress
+        /*
         ArrayList<Byte> uncompressed = new ArrayList<Byte>();
         for (byte compressedByte : compressed) {
             uncompressed.add((byte)((compressedByte & 0x80) >>> 7));
@@ -132,35 +146,36 @@ public class IndexCompressor {
             uncompressed.add((byte)((compressedByte & 0x02) >>> 1));
             uncompressed.add((byte)((compressedByte & 0x01) >>> 0));
         }
+        */
         
         // decode
-        Object[] intArray = decodeGamma(uncompressed);
+        ArrayList<Integer> intArray = decodeGamma(compressed);
         HashMap<String, Integer>                   docFrequency      = new HashMap<String, Integer>();
         HashMap<String, ArrayList<TermFreqItem>>   termFrequency     = new HashMap<String, ArrayList<TermFreqItem>>();
         HashMap<String, LinkedList<DocAppearItem>> docAppearPosition = new HashMap<String, LinkedList<DocAppearItem>>();
         int cursor = 0;
-        while (cursor < intArray.length) {
-            int wordLength = (Integer)intArray[cursor++];
+        while (cursor < intArray.size()) {
+            int wordLength = intArray.get(cursor++);
             char[] charSequence = new char[wordLength];
             for (int i = 0; i < wordLength; ++i) {
-                int ascii = (Integer)intArray[cursor++];
+                int ascii = intArray.get(cursor++);
                 charSequence[i] = (char)ascii;
             }
             String word = new String(charSequence);
-            int df = (Integer)intArray[cursor++];
+            int df = intArray.get(cursor++);
             docFrequency.put(word, df);
             termFrequency.put(word, new ArrayList<TermFreqItem>());
             docAppearPosition.put(word, new LinkedList<DocAppearItem>());
             
             int lastDocID = 0;
             for (int i = 0; i < df; ++i) {
-                int docID = (Integer)intArray[cursor++] + lastDocID;
-                int tf = (Integer)intArray[cursor++];
+                int docID = intArray.get(cursor++) + lastDocID;
+                int tf = intArray.get(cursor++);
                 TermFreqItem tfItem = new TermFreqItem(docID, tf);
                 termFrequency.get(word).add(tfItem);
                 
                 for (int j = 0; j < tf; ++j) {
-                    int docPos = (Integer)intArray[cursor++];
+                    int docPos = intArray.get(cursor++);
                     DocAppearItem docAppearItem = new DocAppearItem(docID, docPos);
                     docAppearPosition.get(word).add(docAppearItem);
                 }
@@ -204,17 +219,41 @@ public class IndexCompressor {
         return termForm;
     }
 
-    static private Object[] encode(TermForm termForm) {
+    static private int appendBits(ArrayList<Byte> binary, ArrayList<Byte> bits, int offset) {
+        if (binary.isEmpty() == true)
+            binary.add((byte)0xFF);
+        for (byte b : bits) {
+            byte B = binary.get(binary.size() - 1);
+            switch (offset++) {
+                case (0): binary.set(binary.size() - 1, (byte)(B & (b == 1 ? 0xFF : 0x7F))); break;
+                case (1): binary.set(binary.size() - 1, (byte)(B & (b == 1 ? 0xFF : 0xBF))); break;
+                case (2): binary.set(binary.size() - 1, (byte)(B & (b == 1 ? 0xFF : 0xDF))); break;
+                case (3): binary.set(binary.size() - 1, (byte)(B & (b == 1 ? 0xFF : 0xEF))); break;
+                case (4): binary.set(binary.size() - 1, (byte)(B & (b == 1 ? 0xFF : 0xF7))); break;
+                case (5): binary.set(binary.size() - 1, (byte)(B & (b == 1 ? 0xFF : 0xFB))); break;
+                case (6): binary.set(binary.size() - 1, (byte)(B & (b == 1 ? 0xFF : 0xFD))); break;
+                case (7): binary.set(binary.size() - 1, (byte)(B & (b == 1 ? 0xFF : 0xFE))); break;
+            }
+            if (offset == 8) {
+                binary.add((byte)0xFF);
+                offset = 0;
+            }
+        }
+        return offset;
+    }
+
+    static private ArrayList<Byte> encode(TermForm termForm) {
+        int innerByteOffset = 0;
         ArrayList<Byte> binary = new ArrayList<Byte>();
         Map<String, LinkedList<DocAppearItem>> indexSet = termForm.getDocAppearPosition();
         Map<String, ArrayList<TermFreqItem>> termFreqSet = termForm.getTermFrequency();
         for (String word : indexSet.keySet()) {
             // encode the word
             ArrayList<Byte> wordLength = encodeGamma(word.length());
-            binary.addAll(wordLength);
+            innerByteOffset = appendBits(binary, wordLength, innerByteOffset);
             for (int i = 0; i < word.length(); ++i) {
                 char c = word.charAt(i);
-                binary.addAll(encodeGamma(c));
+                innerByteOffset = appendBits(binary, encodeGamma(c), innerByteOffset);
             }
             
             ArrayList<TermFreqItem> tfs = termFreqSet.get(word);
@@ -224,7 +263,7 @@ public class IndexCompressor {
             
             // encode the df
             int df = tfs.size();
-            binary.addAll(encodeGamma(df));
+            innerByteOffset = appendBits(binary, encodeGamma(df), innerByteOffset);
 
             // encode all the tfs
             int lastDocID = 0;
@@ -232,8 +271,8 @@ public class IndexCompressor {
                 TermFreqItem tfItem = tfIt.next();
                 int docID = tfItem.docID - lastDocID;
                 int tf = tfItem.freq;
-                binary.addAll(encodeGamma(docID));
-                binary.addAll(encodeGamma(tf));
+                innerByteOffset = appendBits(binary, encodeGamma(docID), innerByteOffset);
+                innerByteOffset = appendBits(binary, encodeGamma(tf), innerByteOffset);
                 for (int i = 0; i < tf; ++i) {
                     DocAppearItem docAppearItem = docIt.next();
                     if (docID != docAppearItem.docID - lastDocID) {
@@ -241,12 +280,12 @@ public class IndexCompressor {
                         return null;
                     }
                     int docPos = docAppearItem.docPos;
-                    binary.addAll(encodeGamma(docPos));
+                    innerByteOffset = appendBits(binary, encodeGamma(docPos), innerByteOffset);
                 }
                 lastDocID = tfItem.docID;
             }
         }
-        return binary.toArray();
+        return binary;
     }
 
     /**
@@ -277,22 +316,45 @@ public class IndexCompressor {
         return gamma;
     }
 
+    static private byte getBit(byte B, int offset) {
+        switch (offset) {
+            case (0): return (byte)((B & 0x80) >>> 7);
+            case (1): return (byte)((B & 0x40) >>> 6);
+            case (2): return (byte)((B & 0x20) >>> 5);
+            case (3): return (byte)((B & 0x10) >>> 4);
+            case (4): return (byte)((B & 0x08) >>> 3);
+            case (5): return (byte)((B & 0x04) >>> 2);
+            case (6): return (byte)((B & 0x02) >>> 1);
+            case (7): return (byte)((B & 0x01) >>> 0);
+        }
+        return -1;
+    }
+
     /**
      * Decode gamma code back to integer
      * @param gamma The gamma code to be decoded, use Byte to store one bit
      * @return The origin integer
      */
-    static private Object[] decodeGamma(ArrayList<Byte> gamma) {
+    static private ArrayList<Integer> decodeGamma(ArrayList<Byte> gamma) {
         int cursor = 0;
+        int innerByteOffset = 0;
         ArrayList<Integer> intArray = new ArrayList<Integer>();
         while (cursor < gamma.size()) {
-            if (gamma.get(cursor) == 0) {
+            if (getBit(gamma.get(cursor), innerByteOffset) == 0) {
+                ++innerByteOffset;
                 intArray.add(1);
-                ++cursor;
+                if (innerByteOffset == 8) {
+                    innerByteOffset = 0;
+                    ++cursor;
+                }
             } else {
                 int num = 1;
                 int length = 0;
-                while (gamma.get(cursor++) == 1) {
+                while (getBit(gamma.get(cursor), innerByteOffset++) == 1) {
+                    if (innerByteOffset == 8) {
+                        innerByteOffset = 0;
+                        ++cursor;
+                    }
                     if (cursor == gamma.size()) {
                         length = 0;
                         break;
@@ -300,16 +362,26 @@ public class IndexCompressor {
                     ++length;
                     num <<= 1;
                 }
-                if (length == 0)
+                if (length == 0) {
                     break;
+                }
+                if (innerByteOffset == 8) {
+                    innerByteOffset = 0;
+                    ++cursor;
+                }
                 byte[] offset = new byte[length];
-                for (int i = 0; i < length; ++i)
-                    offset[i] = gamma.get(cursor++);
+                for (int i = 0; i < length; ++i) {
+                    offset[i] = getBit(gamma.get(cursor), innerByteOffset++);
+                    if (innerByteOffset == 8) {
+                        innerByteOffset = 0;
+                        ++cursor;
+                    }
+                }
                 num += binaryToInt(offset);
                 intArray.add(num);
             }
         }
-        return intArray.toArray();
+        return intArray;
     }
 
     /**
@@ -347,13 +419,28 @@ public class IndexCompressor {
     }
 
     public static void main(String[] args) {
-        ArrayList<Byte> gamma;
+        ArrayList<Byte> gamma = new ArrayList<Byte>();
+        int innerByteOffset = 0;
 
-        gamma = encodeGamma(1);
-        for (Byte b : gamma)
-            System.out.print(b);
-        System.out.println(" " + decodeGamma(gamma)[0]);
+        innerByteOffset = appendBits(gamma, encodeGamma(1), innerByteOffset);
+        innerByteOffset = appendBits(gamma, encodeGamma(2), innerByteOffset);
+        innerByteOffset = appendBits(gamma, encodeGamma(3), innerByteOffset);
+        innerByteOffset = appendBits(gamma, encodeGamma(4), innerByteOffset);
+        innerByteOffset = appendBits(gamma, encodeGamma(9), innerByteOffset);
+        innerByteOffset = appendBits(gamma, encodeGamma(13), innerByteOffset);
+        innerByteOffset = appendBits(gamma, encodeGamma(24), innerByteOffset);
+        innerByteOffset = appendBits(gamma, encodeGamma(511), innerByteOffset);
+        innerByteOffset = appendBits(gamma, encodeGamma(1025), innerByteOffset);
+        innerByteOffset = appendBits(gamma, encodeGamma(482), innerByteOffset);
+        for (byte b : gamma)
+            System.out.printf("%x ", b);
+        System.out.println();
+        ArrayList<Integer> intArray = decodeGamma(gamma);
+        for (int num : intArray)
+            System.out.print(num + " ");
+        System.out.println();
 
+        /*
         gamma = encodeGamma(2);
         for (Byte b : gamma)
             System.out.print(b);
@@ -403,5 +490,6 @@ public class IndexCompressor {
         for (Byte b : gamma)
             System.out.print(b);
         System.out.println(" " + decodeGamma(gamma)[0]);
+        */
     }
 }
