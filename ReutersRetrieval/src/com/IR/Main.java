@@ -13,9 +13,12 @@ public class Main {
         TermForm termForm = new TermForm();
         KeyRetrieval keyRetrieval = new KeyRetrieval();
         readFiles.loadFiles(termForm);
-//        IndexCompressor.compress(termForm, ConstValues.INDEX_DIR);
-//        termForm = IndexCompressor.uncompress(ConstValues.INDEX_DIR);
-//        termForm.printTable();
-        keyRetrieval.processRetrieval(termForm, readFiles);
+        //termForm.printTable();
+        
+        IndexCompressor.compress(termForm, ConstValues.INDEX_DIR);
+        //termForm = IndexCompressor.uncompress(ConstValues.INDEX_DIR);
+        //termForm.printTable();
+        
+        //keyRetrieval.processRetrieval(termForm, readFiles);
     }
 }

@@ -12,4 +12,6 @@
 /ReutersRetrieval/.classpath
 /ReutersRetrieval/bin/*
 
+/ReutersRetrieval/dist/*
+
 *.swp
