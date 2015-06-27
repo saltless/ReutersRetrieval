@@ -11,6 +11,7 @@ public class ConstValues {
     public static final String INDEX_DIR = "resource/index.ir";
 
     public static final int DIVIDED_BY_ZERO = -2;
+    public static final String EXIT_CODE = "***";
 
     public static final double LONG_ARTICLE_BONUS = 0.15;
     public static final double LONG_ARTICLE_THRESHOLD = 50;

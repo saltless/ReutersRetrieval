@@ -153,7 +153,10 @@ public class KeyRetrieval {
         while (true) {
             System.out.print("[Search Key]: ");
             StringBuilder searchKey = new StringBuilder(scanner.nextLine());
-            if (searchKey.equals(new StringBuilder("exit()"))) return;
+            if (searchKey.toString().equals(ConstValues.EXIT_CODE)) {
+                System.out.println("\nGood Bye!\n");
+                return;
+            }
             System.out.print("[Search Result]: ");
             docCursor = new HashMap<String, Integer>();
             LinkedList<ParsedTermItem> termSet = TermParser.parseArticle(searchKey.append("\n"));
