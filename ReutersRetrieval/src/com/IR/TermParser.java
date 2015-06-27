@@ -83,9 +83,30 @@ public class TermParser {
 
         StringBuilder str = new StringBuilder();
         for (int i = 0; i < raw.length(); i++) {
-            if (!TermParser.isOthers(raw.charAt(i))) str.append(raw.charAt(i));
+            if (!isOthers(raw.charAt(i))) str.append(raw.charAt(i));
         }
         return new String(str);
+    }
+
+    private static LinkedList<String> separateTermsByNonChaOrNum(String rawString){
+        LinkedList<String> result = new LinkedList<String>();
+        int counter = 0;
+        StringBuilder str = new StringBuilder();
+        for (int cursor = 0; cursor < rawString.length(); cursor++){
+            if (isOthers(rawString.charAt(cursor))){
+                if (str.length() > 0) {
+                    counter++;
+                    result.addLast(str.toString().toLowerCase());
+                    str.delete(0, str.length());
+                }
+            } else str.append(rawString.charAt(cursor));
+        }
+        if (str.length() > 0) {
+            counter++;
+            result.addLast(str.toString().toLowerCase());
+        }
+        if (counter > 1) result.addLast(removeOthers(rawString).toLowerCase());
+        return result;
     }
 
     /**
@@ -110,18 +131,18 @@ public class TermParser {
             } else {                //CASE: man/woman, X5/X6
                 String rawSplit[] = rawString.split("/");
                 for (String itemStr : rawSplit) {
-                    if (TermParser.removeOthers(itemStr).length() > 0)
-                        parsedTerm.addLast(TermParser.removeOthers(itemStr).toLowerCase());
+                    if (removeOthers(itemStr).length() > 0)
+                        for (String str: separateTermsByNonChaOrNum(itemStr)) parsedTerm.addLast(str);
                 }
             }
         } else if (digitAppear) {
             if (!letteAppear) {     //CASE: 123.234/22
                 parsedTerm.addLast(rawString);
             } else {                //CASE: U.S.A
-                parsedTerm.addLast(TermParser.removeOthers(rawString).toLowerCase());
+                for (String str: separateTermsByNonChaOrNum(rawString)) parsedTerm.addLast(str);
             }
-        } else if (letteAppear) {
-            parsedTerm.addLast(TermParser.removeOthers(rawString).toLowerCase());
+        } else if (letteAppear) {  //CASE: U.S.A
+            for (String str: separateTermsByNonChaOrNum(rawString)) parsedTerm.addLast(str);
         }
         return parsedTerm;
     }
@@ -136,7 +157,7 @@ public class TermParser {
 
         LinkedList<ParsedTermItem> parsedArticle = new LinkedList<ParsedTermItem>();
         StringBuilder prevTerm = new StringBuilder("");
-        TermParser.removeBrackets(article);
+        removeBrackets(article);
 
         boolean digitAppear = false;
         boolean letteAppear = false;
@@ -150,7 +171,7 @@ public class TermParser {
             if (nextChar == ' ' || nextChar == '\n'){
                 if (term.length() > 0) {
 //                            System.out.print("<" + docPos + ">" + term);
-                    LinkedList<String> parsedTerm = TermParser.parseTerm(digitAppear, letteAppear, slashAppear, term);
+                    LinkedList<String> parsedTerm = parseTerm(digitAppear, letteAppear, slashAppear, term);
                     for (String termItem : parsedTerm){
                         parsedArticle.addLast(new ParsedTermItem(termItem, ++docPos));
                         if (prevTerm.length() > 0) {

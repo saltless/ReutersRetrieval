@@ -69,7 +69,6 @@ public class TermForm {
      * @param parsedArticle parsed terms
      */
     public void addTerm(int docID, LinkedList<ParsedTermItem> parsedArticle){
-        if (parsedArticle.size() > 50) additionalGrade.put(docID, ConstValues.LONG_ARTICLE_BONUS);
         for (ParsedTermItem termItem : parsedArticle){
             String rawString = termItem.term;
             int docPos = termItem.docPos;
@@ -87,12 +86,19 @@ public class TermForm {
                 }
             }
         }
+        int docLenTemp = 0;
         for (String term: termFrequency.keySet()) {
             if ((null != termFrequency.get(term)) && (termFrequency.get(term).get(termFrequency.get(term).size() - 1).docID == docID)){
+                docLenTemp++;
                 int currTermFreq = termFrequency.get(term).get(termFrequency.get(term).size() - 1).freq;
                 if (null == docLength.get(docID)) docLength.put(docID, Math.pow(currTermFreq, 2));
                 else docLength.put(docID, docLength.get(docID) + Math.pow(currTermFreq, 2));
             }
+        }
+        if (parsedArticle.size() > ConstValues.LONG_ARTICLE_THRESHOLD){
+            if ((double)parsedArticle.size() / (double)docLenTemp > ConstValues.MORE_TERMS_THRESHOLD)
+                additionalGrade.put(docID, ConstValues.LONG_ARTICLE_BONUS + ConstValues.MORE_TERMS_BONUS);
+            else additionalGrade.put(docID, additionalGrade.get(docID) + ConstValues.LONG_ARTICLE_BONUS);
         }
     }
 
@@ -100,13 +106,18 @@ public class TermForm {
      * Print info of class for debugging.
      */
     public void printTable(){
-        for (String term : termFrequency.keySet()){
-            System.out.print(term + " => df = " + termFrequency.get(term).size() + " tf = " + termFrequency.get(term).get(0).freq + "\n\t");
-            for (DocAppearItem item : docAppearPosition.get(term)){
-                System.out.print(item.docID + ":" + item.docPos + " ");
-            }
-            System.out.println();
-        }
+//        for (String term : termFrequency.keySet()){
+//            System.out.print(term + " => df = " + termFrequency.get(term).size() + " tf = " + termFrequency.get(term).get(0).freq + "\n\t");
+//            for (DocAppearItem item : docAppearPosition.get(term)){
+//                System.out.print(item.docID + ":" + item.docPos + " ");
+//            }
+//            System.out.println();
+//        }
         System.out.println("Total number of terms = " + termFrequency.size());
+
+//        System.out.println(docLength.size());
+//        for (int i: docLength.keySet()){
+//            System.out.println(i + ": " + docLength.get(i));
+//        }
     }
 }
