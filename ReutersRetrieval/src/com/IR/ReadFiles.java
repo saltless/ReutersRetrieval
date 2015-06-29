@@ -64,4 +64,23 @@ public class ReadFiles {
         }
         fileList = newFileList;
     }
+
+    public void printFiles(int docID){
+
+        String dir = baseDir + docID + ".html";
+        File file = new File(String.valueOf(dir));
+        if (file.exists()) try {
+            System.out.println("\n================== FILE: " + docID + ".html ==================\n");
+            InputStream inputStream = new FileInputStream(file);
+            StringBuilder article = new StringBuilder();
+            int next;
+            while ((next = inputStream.read()) != -1) article.append((char) next);
+            System.out.println(article);
+            inputStream.close();
+        } catch (Exception e){
+            e.printStackTrace();
+        } else {
+            System.out.println("FILE: " + docID + ".html NOT FOUND!");
+        }
+    }
 }

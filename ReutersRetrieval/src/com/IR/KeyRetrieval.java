@@ -148,42 +148,52 @@ public class KeyRetrieval {
      * @param termForm term frequency on processing
      * @param readFiles file list
      */
-    public void processRetrieval(TermForm termForm, ReadFiles readFiles) {
+    public RunningState processRetrieval(TermForm termForm, ReadFiles readFiles) {
         Scanner scanner = new Scanner(System.in);
         while (true) {
-            System.out.print("[Search Key]: ");
+            System.out.print("\n[Search Key]: ");
             StringBuilder searchKey = new StringBuilder(scanner.nextLine());
-            if (searchKey.toString().equals(ConstValues.EXIT_CODE)) {
-                System.out.println("\nGood Bye!\n");
-                return;
-            }
-            System.out.print("[Search Result]: ");
-            docCursor = new HashMap<String, Integer>();
-            LinkedList<ParsedTermItem> termSet = TermParser.parseArticle(searchKey.append("\n"));
-            HashMap<String, Integer> queryVector = this.getQueryVector(termSet);
-            ArrayList<VectorValueItem> evaluationList = new ArrayList<VectorValueItem>();
-            HashMap<String, Double> iDocFrequency = this.getInverseDocFrequency(termForm, queryVector, readFiles.fileList.size());
-            for (String term: iDocFrequency.keySet()){
-                System.out.println(term + ": " + iDocFrequency.get(term));
-            }
-            for (int docID : readFiles.fileList) {
-                HashMap<String, Integer> docVector = this.getDocVector(termForm, docID, queryVector);
-                double vectorValue = this.vectorEvaluation(queryVector, docVector, iDocFrequency, termForm.getDocLength(docID));
-                if (ConstValues.DIVIDED_BY_ZERO != vectorValue) {
-                    evaluationList.add(new VectorValueItem(docID, vectorValue + termForm.getAdditionalGrade(docID)));
-//                    System.out.println("Doc " + docID + ": " + (vectorValue + termForm.getAdditionalGrade(docID)));
+            if (searchKey.toString().equals(ConstValues.EXIT_CODE)) return RunningState.EXIT;
+            else if (searchKey.toString().equals(ConstValues.BOOL_CODE)) {
+                System.out.println("\nSwitch into BOOLEAN retrieval mode? [y/n]");
+                String det = scanner.nextLine();
+                if (det.toLowerCase().equals(ConstValues.CONFIRM_CODE)) return RunningState.BOOL_RETRIEVAL;
+            } else if (searchKey.toString().equals(ConstValues.KEY_CODE)) {
+                System.out.println("\nYou are now in FUZZY retrieval mode.");
+            } else if (searchKey.toString().split(" ")[0].equals(ConstValues.FILE_CODE)){
+                if (searchKey.toString().split(" ").length > 2) System.out.println("\nToo many arguments!");
+                else try {
+                    readFiles.printFiles(Integer.parseInt(searchKey.toString().split(" ")[1]));
+                } catch (NumberFormatException e){
+                    System.out.println("\nPlease input an integer as the argument ~f.");
                 }
-            }
-            Collections.sort(evaluationList, vectorComp);
-            Boolean isFound = false;
-            for (int ans = 0; ans < (4 < evaluationList.size() ? 4 : evaluationList.size()); ans++){
-//                System.out.println(ans + " " + evaluationList.get(ans).value);
-                if (evaluationList.get(ans).value > 0) {
-                    isFound = true;
-                    System.out.println("FILE: " + evaluationList.get(ans).docID + " " + evaluationList.get(ans).value);
+            } else {
+                System.out.println("\n[Search Result]: ");
+                docCursor = new HashMap<String, Integer>();
+                LinkedList<ParsedTermItem> termSet = TermParser.parseArticle(searchKey.append("\n"));
+                HashMap<String, Integer> queryVector = this.getQueryVector(termSet);
+                ArrayList<VectorValueItem> evaluationList = new ArrayList<VectorValueItem>();
+                HashMap<String, Double> iDocFrequency = this.getInverseDocFrequency(termForm, queryVector, readFiles.fileList.size());
+//                for (String term : iDocFrequency.keySet()) {
+//                    System.out.println(term + ": " + iDocFrequency.get(term));
+//                }
+                for (int docID : readFiles.fileList) {
+                    HashMap<String, Integer> docVector = this.getDocVector(termForm, docID, queryVector);
+                    double vectorValue = this.vectorEvaluation(queryVector, docVector, iDocFrequency, termForm.getDocLength(docID));
+                    if (ConstValues.DIVIDED_BY_ZERO != vectorValue) {
+                        evaluationList.add(new VectorValueItem(docID, vectorValue + termForm.getAdditionalGrade(docID)));
+                    }
                 }
+                Collections.sort(evaluationList, vectorComp);
+                Boolean isFound = false;
+                for (int ans = 0; ans < (4 < evaluationList.size() ? 4 : evaluationList.size()); ans++) {
+                    if (evaluationList.get(ans).value > 0) {
+                        isFound = true;
+                        readFiles.printFiles(evaluationList.get(ans).docID);
+                    }
+                }
+                if (!isFound) System.out.println("\nNo answer found!");
             }
-            if (!isFound) System.out.println("No answer found!");
         }
     }
 }
