@@ -98,7 +98,7 @@ public class TermForm {
         if (parsedArticle.size() > ConstValues.LONG_ARTICLE_THRESHOLD){
             if ((double)parsedArticle.size() / (double)docLenTemp > ConstValues.MORE_TERMS_THRESHOLD)
                 additionalGrade.put(docID, ConstValues.LONG_ARTICLE_BONUS + ConstValues.MORE_TERMS_BONUS);
-            else additionalGrade.put(docID, additionalGrade.get(docID) + ConstValues.LONG_ARTICLE_BONUS);
+            else additionalGrade.put(docID, ConstValues.LONG_ARTICLE_BONUS);
         }
     }
 
@@ -106,13 +106,13 @@ public class TermForm {
      * Print info of class for debugging.
      */
     public void printTable(){
-//        for (String term : termFrequency.keySet()){
-//            System.out.print(term + " => df = " + termFrequency.get(term).size() + " tf = " + termFrequency.get(term).get(0).freq + "\n\t");
-//            for (DocAppearItem item : docAppearPosition.get(term)){
-//                System.out.print(item.docID + ":" + item.docPos + " ");
-//            }
-//            System.out.println();
-//        }
+        for (String term : termFrequency.keySet()){
+            System.out.print(term + " => df = " + termFrequency.get(term).size() + " tf = " + termFrequency.get(term).get(0).freq + "\n\t");
+            for (DocAppearItem item : docAppearPosition.get(term)){
+                System.out.print(item.docID + ":" + item.docPos + " ");
+            }
+            System.out.println();
+        }
         System.out.println("Total number of terms = " + termFrequency.size());
 
 //        System.out.println(docLength.size());

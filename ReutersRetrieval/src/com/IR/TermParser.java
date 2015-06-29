@@ -1,5 +1,6 @@
 package com.IR;
 
+import com.IR.util.TermStem;
 import java.util.LinkedList;
 
 /**
@@ -110,6 +111,20 @@ public class TermParser {
     }
 
     /**
+     * Check whether a given string is consisted only
+     * by letters
+     * @param raw input string
+     * @return true if the string contains only letters
+     */
+    private static boolean isOnlyLetters(String raw){
+        for (int i = 0; i < raw.length(); i++){
+            char c = raw.charAt(i);
+            if (!((c >= 'a') && (c <= 'z'))) return false;
+        }
+        return true;
+    }
+
+    /**
      * Parse term from given string.
      * Strategy:
      *  1, [digit]+'/'[digit]+                              =>      [digit]+/[digit]+
@@ -142,7 +157,11 @@ public class TermParser {
                 for (String str: separateTermsByNonChaOrNum(rawString)) parsedTerm.addLast(str);
             }
         } else if (letteAppear) {  //CASE: U.S.A
-            for (String str: separateTermsByNonChaOrNum(rawString)) parsedTerm.addLast(str);
+            if (isOnlyLetters(rawString.toLowerCase())){
+                parsedTerm.addLast(new TermStem(rawString).stemmed);
+            } else {
+                for (String str: separateTermsByNonChaOrNum(rawString)) parsedTerm.addLast(str);
+            }
         }
         return parsedTerm;
     }

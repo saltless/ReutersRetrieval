@@ -20,8 +20,8 @@ public class ConstValues {
     public static final double LONG_ARTICLE_BONUS = 0.15;
     public static final double LONG_ARTICLE_THRESHOLD = 50;
 
-    public static final double MORE_TERMS_BONUS = 0.1;
-    public static final double MORE_TERMS_THRESHOLD = 0.65;
+    public static final double MORE_TERMS_BONUS = 0.4;
+    public static final double MORE_TERMS_THRESHOLD = 1.1;
 
     //=======For debugging======
 //    public static final String FILE_DIR = "Reuters/_test/FileList.txt";
