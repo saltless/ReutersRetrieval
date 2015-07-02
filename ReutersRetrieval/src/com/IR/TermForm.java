@@ -87,17 +87,21 @@ public class TermForm {
             }
         }
         int docLenTemp = 0;
+//        System.out.println();
+//        System.out.print(docID + ": ");
         for (String term: termFrequency.keySet()) {
             if ((null != termFrequency.get(term)) && (termFrequency.get(term).get(termFrequency.get(term).size() - 1).docID == docID)){
                 docLenTemp++;
+//                System.out.print(docLenTemp + "*" + term + "* ");
                 int currTermFreq = termFrequency.get(term).get(termFrequency.get(term).size() - 1).freq;
                 if (null == docLength.get(docID)) docLength.put(docID, Math.pow(currTermFreq, 2));
                 else docLength.put(docID, docLength.get(docID) + Math.pow(currTermFreq, 2));
             }
         }
+//        System.out.println();
         if (parsedArticle.size() > ConstValues.LONG_ARTICLE_THRESHOLD){
-            if ((double)parsedArticle.size() / (double)docLenTemp > ConstValues.MORE_TERMS_THRESHOLD)
-                additionalGrade.put(docID, ConstValues.LONG_ARTICLE_BONUS + ConstValues.MORE_TERMS_BONUS);
+            if ((double)parsedArticle.size() / (double)docLenTemp < ConstValues.MORE_TERMS_THRESHOLD){
+                additionalGrade.put(docID, ConstValues.LONG_ARTICLE_BONUS + ConstValues.MORE_TERMS_BONUS);}
             else additionalGrade.put(docID, ConstValues.LONG_ARTICLE_BONUS);
         }
     }
@@ -107,7 +111,9 @@ public class TermForm {
      */
     public void printTable(){
         for (String term : termFrequency.keySet()){
-            System.out.print(term + " => df = " + termFrequency.get(term).size() + " tf = " + termFrequency.get(term).get(0).freq + "\n\t");
+            int tf = 0;
+            for (TermFreqItem item: termFrequency.get(term)) tf += item.freq;
+            System.out.print(term + " => df = " + termFrequency.get(term).size() + " tf = " + tf + "\n\t");
             for (DocAppearItem item : docAppearPosition.get(term)){
                 System.out.print(item.docID + ":" + item.docPos + " ");
             }

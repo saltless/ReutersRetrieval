@@ -1,13 +1,5 @@
 package com.IR;
 
-//import java.util.ArrayList;
-//import java.util.Collections;
-//import java.util.Comparator;
-//import java.util.LinkedList;
-import com.IR.util.*;
-
-import java.util.Scanner;
-
 public class Main {
 
     public static void main(String[] args) {
@@ -16,10 +8,10 @@ public class Main {
         readFiles.getFileList(ConstValues.FILE_DIR);
         TermForm termForm = new TermForm();
 
-        readFiles.loadFiles(termForm);
+//        readFiles.loadFiles(termForm);
 //        termForm.printTable();
 //
-        IndexCompressor.compress(termForm, ConstValues.INDEX_DIR);
+//        IndexCompressor.compress(termForm, ConstValues.INDEX_DIR);
         System.out.println("Loading index...\n\n");
         termForm = IndexCompressor.uncompress(ConstValues.INDEX_DIR);
 //      termForm.printTable();

@@ -180,15 +180,19 @@ public class KeyRetrieval {
                 for (int docID : readFiles.fileList) {
                     HashMap<String, Integer> docVector = this.getDocVector(termForm, docID, queryVector);
                     double vectorValue = this.vectorEvaluation(queryVector, docVector, iDocFrequency, termForm.getDocLength(docID));
+//                    System.out.println(docID + ": " + vectorValue);
                     if (ConstValues.DIVIDED_BY_ZERO != vectorValue) {
+//                        System.out.println("*" + termForm.getAdditionalGrade(docID) + "*");
                         evaluationList.add(new VectorValueItem(docID, vectorValue + termForm.getAdditionalGrade(docID)));
+//                        evaluationList.add(new VectorValueItem(docID, vectorValue));
                     }
                 }
                 Collections.sort(evaluationList, vectorComp);
                 Boolean isFound = false;
-                for (int ans = 0; ans < (4 < evaluationList.size() ? 4 : evaluationList.size()); ans++) {
+                for (int ans = 0; ans < (ConstValues.TOTAL_SHOWING_NUM < evaluationList.size() ? ConstValues.TOTAL_SHOWING_NUM : evaluationList.size()); ans++) {
                     if (evaluationList.get(ans).value > 0) {
                         isFound = true;
+//                        System.out.println(evaluationList.get(ans).docID + ": " + evaluationList.get(ans).value);
                         readFiles.printFiles(evaluationList.get(ans).docID);
                     }
                 }

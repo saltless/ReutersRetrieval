@@ -34,7 +34,7 @@ public class BoolRetrieval {
 				index = 0;
 				ArrayList<TermFreqItem> answer = doSearch(keys);
 				if (answer != null && answer.size() > 0) {
-					for (int ans = 0; ans < (4 < answer.size() ? 4 : answer.size()); ans++) {
+					for (int ans = 0; ans < (ConstValues.TOTAL_SHOWING_NUM < answer.size() ? ConstValues.TOTAL_SHOWING_NUM : answer.size()); ans++) {
 						if (answer.get(ans).docID > 0) {
 							readFiles.printFiles(answer.get(ans).docID);
 						}
